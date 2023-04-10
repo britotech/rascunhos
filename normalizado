@@ -1,69 +1,29 @@
-public static void main(String[] args) {
-    System.out.println("- Downloader started");
+package tech.brito.backend.core.validation;
 
-    // Verifying argument length
-    if (args.length != 1) {
-        System.out.println("Invalid number of arguments. Please provide the base directory.");
-        System.exit(1);
-    }
+import jakarta.validation.Constraint;
+import jakarta.validation.Payload;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
-    // Retrieving base directory
-    Path baseDirectory = Paths.get(args[0]).normalize();
-    System.out.println("- Using base directory: " + baseDirectory);
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-    // Retrieving maven-wrapper.properties path
-    Path mavenWrapperPropertiesPath = baseDirectory.resolve(MAVEN_WRAPPER_PROPERTIES_PATH).normalize();
+import static java.lang.annotation.ElementType.*;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-    // Retrieving maven-wrapper.jar path
-    Path mavenWrapperJarPath = baseDirectory.resolve(MAVEN_WRAPPER_JAR_PATH).normalize();
 
-    // Checking for canonical paths
-    if (!baseDirectory.toAbsolutePath().normalize().startsWith(Paths.get("").toAbsolutePath().normalize())) {
-        System.out.println("- ERROR: Invalid base directory.");
-        System.exit(1);
-    }
-    if (!mavenWrapperPropertiesPath.toAbsolutePath().normalize().startsWith(baseDirectory.toAbsolutePath().normalize())) {
-        System.out.println("- ERROR: Invalid maven-wrapper.properties path.");
-        System.exit(1);
-    }
-    if (!mavenWrapperJarPath.toAbsolutePath().normalize().startsWith(baseDirectory.toAbsolutePath().normalize())) {
-        System.out.println("- ERROR: Invalid maven-wrapper.jar path.");
-        System.exit(1);
-    }
+@Target({METHOD, FIELD, ANNOTATION_TYPE, CONSTRUCTOR, PARAMETER, TYPE_USE})
+@Retention(RUNTIME)
+@Constraint(validatedBy = {})
+@NotBlank
+@Size(max = 20)
+@Pattern(regexp = "[0-9]+")
+public @interface CodigoEmpresa {
 
-    // Default download URL
-    String url = DEFAULT_DOWNLOAD_URL;
+    String message() default "{jakarta.validation.constraints.NotBlank.message}";
 
-    // If the maven-wrapper.properties exists, read it and check if it contains a custom wrapperUrl parameter.
-    File mavenWrapperPropertyFile = mavenWrapperPropertiesPath.toFile();
-    if (mavenWrapperPropertyFile.exists()) {
-        try (FileInputStream mavenWrapperPropertyFileInputStream = new FileInputStream(mavenWrapperPropertyFile)) {
-            Properties mavenWrapperProperties = new Properties();
-            mavenWrapperProperties.load(mavenWrapperPropertyFileInputStream);
-            url = mavenWrapperProperties.getProperty(PROPERTY_NAME_WRAPPER_URL, url);
-        } catch (IOException e) {
-            System.out.println("- ERROR loading '" + MAVEN_WRAPPER_PROPERTIES_PATH + "'");
-            System.exit(1);
-        }
-    }
-    System.out.println("- Downloading from: " + url);
+    Class<?>[] groups() default {};
 
-    // Downloading maven-wrapper.jar to the specified directory
-    File outputFile = mavenWrapperJarPath.toFile();
-    if (!outputFile.getParentFile().exists()) {
-        if (!outputFile.getParentFile().mkdirs()) {
-            System.out.println("- ERROR creating output directory '" + outputFile.getParentFile().getAbsolutePath() + "'");
-            System.exit(1);
-        }
-    }
-    System.out.println("- Downloading to: " + outputFile.getAbsolutePath());
-    try {
-        downloadFileFromURL(url, outputFile);
-        System.out.println("Done");
-        System.exit(0);
-    } catch (Throwable e) {
-        System.out.println("- Error downloading");
-        e.printStackTrace();
-        System.exit(1);
-    }
+    Class<? extends Payload>[] payload() default {};
 }
