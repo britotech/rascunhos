@@ -1,0 +1,41 @@
+[
+    {
+        "id": 1,
+        "descricao": "ORG1",
+        "dataInicio": "2023-02-01",
+        "dataFim": "2023-12-31",
+        "organogramaPai": null
+    },
+    {
+        "id": 2,
+        "descricao": "ORG2",
+        "dataInicio": "2023-03-01",
+        "dataFim": "2023-11-30",
+        "organogramaPai": {
+            "id": 1,
+            "descricao": "ORG1",
+            "dataInicio": "2023-02-01",
+            "dataFim": "2023-12-31",
+            "organogramaPai": null
+        }
+    },
+    {
+        "id": 3,
+        "descricao": "ORG3",
+        "dataInicio": "2023-04-01",
+        "dataFim": "2023-10-31",
+        "organogramaPai": {
+            "id": 2,
+            "descricao": "ORG2",
+            "dataInicio": "2023-03-01",
+            "dataFim": "2023-11-30",
+            "organogramaPai": {
+                "id": 1,
+                "descricao": "ORG1",
+                "dataInicio": "2023-02-01",
+                "dataFim": "2023-12-31",
+                "organogramaPai": null
+            }
+        }
+    }
+]
