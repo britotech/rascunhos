@@ -1,0 +1,58 @@
+Em um projeto Java com Spring boot tenho as seguintes classes.
+
+@Getter
+@Setter
+@Embeddable
+public class UsuarioSistema {   
+    private String chave;   
+    private String nome;
+}
+
+@Getter
+@Setter
+@Embeddable
+public class UsuarioLotacao {
+    @Column(length = 30, nullable = false)
+    private String chave;
+
+    @Column(length = 70, nullable = false)
+    private String nome;
+
+    @Column(length = 20, nullable = false)
+    private String empresaCodigo;
+
+    @Column(length = 60, nullable = false)
+    private String empresaNome;
+
+    @Column(length = 60, nullable = false)
+    private String lotacao;
+}
+
+@Getter
+@Setter
+@Embeddable
+public class EmpresaLotacao {   
+    private String codigo;   
+    private String nome;   
+    private String lotacao;
+}	
+
+@Getter
+@Setter
+@Entity
+@Table
+public class GerenteExcecao {
+
+    @Id
+    private Long id;
+    private UsuarioSistema usuarioCriacao;
+    private UsuarioLotacao gerente;
+    private EmpresaLotacao empresaExcecao;
+}
+
+você poderia me dar um exemplo de um consulta com Specifications
+onde os filtros serão o gerente e a empresaExcecao na consulta deve
+ser considerado todos os campos, lembrando que esses campos são opcionais
+então a consulta tem que levar em conta que podem estar nulos
+
+
