@@ -1,7 +1,25 @@
-@Getter
-@Setter
-@Embeddable
-public class Vigencia {   
-    private LocalDate inicio;    
-    private LocalDate fim;
+public class GerenteExcecaoSpecification {
+
+    public static Specification<GerenteExcecao> comFiltro(UsuarioLotacao gerente, EmpresaLotacao empresa, Boolean considerarHistorico) {
+        return (root, query, builder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (gerente != null) {
+                predicates.add(builder.equal(root.get("gerente"), gerente));
+            }
+
+            if (empresa != null) {
+                predicates.add(builder.equal(root.get("empresaExcecao"), empresa));
+            }
+
+            if (!considerarHistorico) {
+                LocalDate dataAtual = LocalDate.now();
+                predicates.add(builder.or(
+                        builder.isNull(root.get("vigencia").get("fim")),
+                        builder.greaterThanOrEqualTo(root.get("vigencia").get("fim"), dataAtual)));
+            }
+
+            return builder.and(predicates.toArray(new Predicate[predicates.size()]));
+        };
+    }
 }
