@@ -1,67 +1,7 @@
-package tech.brito.apijava8.service;
-
-import org.springframework.stereotype.Service;
-import tech.brito.apijava8.model.Organograma;
-import tech.brito.apijava8.repositories.OrganogramaRepository;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-
-@Service
-public class OrganogramaService {
-
-    private final OrganogramaRepository repository;
-
-    public OrganogramaService(OrganogramaRepository repository) {
-        this.repository = repository;
-    }
-
-    public Optional<Organograma> obter(Long id) {
-        return repository.findById(id);
-    }
-
-    public List<Organograma> listar() {
-        return repository.findAll();
-    }
-
-    public Organograma salvar(Organograma organograma) {
-
-        validarVigenciaValidaParaOrganogramaPai(organograma);
-        if(Objects.nonNull(organograma.getId())){
-            validarVigenciaValidaParaOrganogramasFilhos(organograma);
-        }
-
-        return repository.save(organograma);
-    }
-
-    private void validarVigenciaValidaParaOrganogramaPai(Organograma organograma) {
-
-        if (Objects.isNull(organograma.getOrganogramaPai())) {
-            return;
-        }
-
-        organograma.setOrganogramaPai(repository.findById(organograma.getOrganogramaPai().getId()).orElseThrow(() -> new RuntimeException("Organograma pai não encontrado")));
-        if (organograma.getDataInicio().isBefore(organograma.getOrganogramaPai().getDataInicio())) {
-            throw new RuntimeException("A data de início não pode ser anterior à data de início do organograma pai");
-        }
-
-        if (organograma.getDataFim().isAfter(organograma.getOrganogramaPai().getDataFim())) {
-            throw new RuntimeException("A data fim não pode ser posterior à data de fim do organograma pai");
-        }
-    }
-
-    private void validarVigenciaValidaParaOrganogramasFilhos(Organograma organograma) {
-
-        List<Organograma> organogramasFilhos = repository.findByOrganogramaPai(organograma);
-        organogramasFilhos.forEach(filho -> {
-            if (organograma.getDataInicio().isAfter(filho.getDataInicio())) {
-                throw new RuntimeException("A data de início não pode ser posterior a data de início de um organograma filho");
-            }
-
-            if (organograma.getDataFim().isBefore(filho.getDataFim())) {
-                throw new RuntimeException("A data fim não pode ser anterior a data fim de um organograma filho");
-            }
-        });
-    }
+@Getter
+@Setter
+@Embeddable
+public class Vigencia {   
+    private LocalDate inicio;    
+    private LocalDate fim;
 }
