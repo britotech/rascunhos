@@ -1,58 +1,76 @@
-Em um projeto Java com Spring boot tenho as seguintes classes.
+import org.springframework.data.jpa.domain.Specification;
 
-@Getter
-@Setter
-@Embeddable
-public class UsuarioSistema {   
-    private String chave;   
-    private String nome;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.Predicate;
+import java.util.ArrayList;
+import java.util.List;
+
+public class GerenteExcecaoSpecification {
+
+    public static Specification<GerenteExcecao> comFiltro(UsuarioLotacao gerente, EmpresaLotacao empresa) {
+        return (root, query, builder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            
+            if (gerente != null) {
+                Join<GerenteExcecao, UsuarioLotacao> joinGerente = root.join("gerente");
+                
+                if (gerente.getChave() != null && !gerente.getChave().isEmpty()) {
+                    predicates.add(builder.like(joinGerente.get("chave"), "%" + gerente.getChave() + "%"));
+                }
+                
+                if (gerente.getNome() != null && !gerente.getNome().isEmpty()) {
+                    predicates.add(builder.like(joinGerente.get("nome"), "%" + gerente.getNome() + "%"));
+                }
+                
+                if (gerente.getEmpresaCodigo() != null && !gerente.getEmpresaCodigo().isEmpty()) {
+                    predicates.add(builder.like(joinGerente.get("empresaCodigo"), "%" + gerente.getEmpresaCodigo() + "%"));
+                }
+                
+                if (gerente.getEmpresaNome() != null && !gerente.getEmpresaNome().isEmpty()) {
+                    predicates.add(builder.like(joinGerente.get("empresaNome"), "%" + gerente.getEmpresaNome() + "%"));
+                }
+                
+                if (gerente.getLotacao() != null && !gerente.getLotacao().isEmpty()) {
+                    predicates.add(builder.like(joinGerente.get("lotacao"), "%" + gerente.getLotacao() + "%"));
+                }
+            }
+            
+            if (empresa != null) {
+                Join<GerenteExcecao, EmpresaLotacao> joinEmpresa = root.join("empresaExcecao");
+                
+                if (empresa.getCodigo() != null && !empresa.getCodigo().isEmpty()) {
+                    predicates.add(builder.like(joinEmpresa.get("codigo"), "%" + empresa.getCodigo() + "%"));
+                }
+                
+                if (empresa.getNome() != null && !empresa.getNome().isEmpty()) {
+                    predicates.add(builder.like(joinEmpresa.get("nome"), "%" + empresa.getNome() + "%"));
+                }
+                
+                if (empresa.getLotacao() != null && !empresa.getLotacao().isEmpty()) {
+                    predicates.add(builder.like(joinEmpresa.get("lotacao"), "%" + empresa.getLotacao() + "%"));
+                }
+            }
+            
+            return builder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
 }
 
-@Getter
-@Setter
-@Embeddable
-public class UsuarioLotacao {
-    @Column(length = 30, nullable = false)
-    private String chave;
 
-    @Column(length = 70, nullable = false)
-    private String nome;
+@Service
+public class GerenteExcecaoService {
 
-    @Column(length = 20, nullable = false)
-    private String empresaCodigo;
+    @Autowired
+    private GerenteExcecaoRepository gerenteExcecaoRepository;
 
-    @Column(length = 60, nullable = false)
-    private String empresaNome;
-
-    @Column(length = 60, nullable = false)
-    private String lotacao;
+    public List<GerenteExcecao> pesquisar(UsuarioLotacao gerente, EmpresaLotacao empresa) {
+        Specification<GerenteExcecao> spec = GerenteExcecaoSpecification.comFiltro(gerente, empresa);
+        return gerenteExcecaoRepository.findAll(spec);
+    }
 }
 
-@Getter
-@Setter
-@Embeddable
-public class EmpresaLotacao {   
-    private String codigo;   
-    private String nome;   
-    private String lotacao;
-}	
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-@Getter
-@Setter
-@Entity
-@Table
-public class GerenteExcecao {
-
-    @Id
-    private Long id;
-    private UsuarioSistema usuarioCriacao;
-    private UsuarioLotacao gerente;
-    private EmpresaLotacao empresaExcecao;
+public interface GerenteExcecaoRepository extends JpaRepository<GerenteExcecao, Long>, JpaSpecificationExecutor<GerenteExcecao> {
 }
-
-você poderia me dar um exemplo de um consulta com Specifications
-onde os filtros serão o gerente e a empresaExcecao na consulta deve
-ser considerado todos os campos, lembrando que esses campos são opcionais
-então a consulta tem que levar em conta que podem estar nulos
-
-
