@@ -1,0 +1,46 @@
+package tech.brito.apijava8.service;
+
+import org.springframework.stereotype.Service;
+import tech.brito.apijava8.model.Organograma;
+import tech.brito.apijava8.repositories.OrganogramaRepository;
+
+import java.util.List;
+import java.util.Objects;
+
+@Service
+public class OrganogramaService {
+
+    private final OrganogramaRepository organogramaRepository;
+
+    public OrganogramaService(OrganogramaRepository organogramaRepository) {
+        this.organogramaRepository = organogramaRepository;
+    }
+
+    public void validarOrnogramaPai(Organograma organograma) {
+        if (Objects.isNull(organograma.getOrganogramaPai())) {
+            return;
+        }
+
+        if (organograma.getDataInicio().isBefore(organograma.getOrganogramaPai().getDataInicio())) {
+            throw new RuntimeException("A data de início não pode ser anterior à data de início do organograma pai");
+        }
+
+        if (organograma.getDataFim().isAfter(organograma.getOrganogramaPai().getDataFim())) {
+            throw new RuntimeException("A data fim não pode ser posterior à data de fim do organograma pai");
+        }
+    }
+
+    public void validarOrganogramasFilhos(Organograma organograma) {
+
+        List<Organograma> organogramasFilhos = organogramaRepository.findByOrganogramaPai(organograma);
+        organogramasFilhos.forEach(filho ->{
+            if (organograma.getDataInicio().isAfter(filho.getDataInicio())) {
+                throw new RuntimeException("A data de início não pode ser posterior a data de início de um organograma filho");
+            }
+
+            if (organograma.getDataFim().isBefore(filho.getDataFim())) {
+                throw new RuntimeException("A data fim não pode ser anterior a data fim de um organograma filho");
+            }
+        });
+    }
+}
