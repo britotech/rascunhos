@@ -1,76 +1,38 @@
-import org.springframework.data.jpa.domain.Specification;
-
-import javax.persistence.criteria.Join;
-import javax.persistence.criteria.Predicate;
-import java.util.ArrayList;
-import java.util.List;
-
-public class GerenteExcecaoSpecification {
-
-    public static Specification<GerenteExcecao> comFiltro(UsuarioLotacao gerente, EmpresaLotacao empresa) {
-        return (root, query, builder) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            
-            if (gerente != null) {
-                Join<GerenteExcecao, UsuarioLotacao> joinGerente = root.join("gerente");
-                
-                if (gerente.getChave() != null && !gerente.getChave().isEmpty()) {
-                    predicates.add(builder.like(joinGerente.get("chave"), "%" + gerente.getChave() + "%"));
-                }
-                
-                if (gerente.getNome() != null && !gerente.getNome().isEmpty()) {
-                    predicates.add(builder.like(joinGerente.get("nome"), "%" + gerente.getNome() + "%"));
-                }
-                
-                if (gerente.getEmpresaCodigo() != null && !gerente.getEmpresaCodigo().isEmpty()) {
-                    predicates.add(builder.like(joinGerente.get("empresaCodigo"), "%" + gerente.getEmpresaCodigo() + "%"));
-                }
-                
-                if (gerente.getEmpresaNome() != null && !gerente.getEmpresaNome().isEmpty()) {
-                    predicates.add(builder.like(joinGerente.get("empresaNome"), "%" + gerente.getEmpresaNome() + "%"));
-                }
-                
-                if (gerente.getLotacao() != null && !gerente.getLotacao().isEmpty()) {
-                    predicates.add(builder.like(joinGerente.get("lotacao"), "%" + gerente.getLotacao() + "%"));
-                }
-            }
-            
-            if (empresa != null) {
-                Join<GerenteExcecao, EmpresaLotacao> joinEmpresa = root.join("empresaExcecao");
-                
-                if (empresa.getCodigo() != null && !empresa.getCodigo().isEmpty()) {
-                    predicates.add(builder.like(joinEmpresa.get("codigo"), "%" + empresa.getCodigo() + "%"));
-                }
-                
-                if (empresa.getNome() != null && !empresa.getNome().isEmpty()) {
-                    predicates.add(builder.like(joinEmpresa.get("nome"), "%" + empresa.getNome() + "%"));
-                }
-                
-                if (empresa.getLotacao() != null && !empresa.getLotacao().isEmpty()) {
-                    predicates.add(builder.like(joinEmpresa.get("lotacao"), "%" + empresa.getLotacao() + "%"));
-                }
-            }
-            
-            return builder.and(predicates.toArray(new Predicate[0]));
-        };
+public class GerenteExcecaoSpecification implements Specification<GerenteExcecao> {
+    
+    private final String gerenteChave;
+    private final String gerenteNome;
+    private final String empresaCodigo;
+    private final Boolean considerarHistorico;
+    
+    public GerenteExcecaoSpecification(String gerenteChave, String gerenteNome, String empresaCodigo, Boolean considerarHistorico) {
+        this.gerenteChave = gerenteChave;
+        this.gerenteNome = gerenteNome;
+        this.empresaCodigo = empresaCodigo;
+        this.considerarHistorico = considerarHistorico;
     }
-}
-
-
-@Service
-public class GerenteExcecaoService {
-
-    @Autowired
-    private GerenteExcecaoRepository gerenteExcecaoRepository;
-
-    public List<GerenteExcecao> pesquisar(UsuarioLotacao gerente, EmpresaLotacao empresa) {
-        Specification<GerenteExcecao> spec = GerenteExcecaoSpecification.comFiltro(gerente, empresa);
-        return gerenteExcecaoRepository.findAll(spec);
+    
+    @Override
+    public Predicate toPredicate(Root<GerenteExcecao> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
+        List<Predicate> predicates = new ArrayList<>();
+        
+        Optional.ofNullable(gerenteChave)
+            .ifPresent(chave -> predicates.add(builder.equal(root.get("gerente").get("chave"), chave)));
+        
+        Optional.ofNullable(gerenteNome)
+            .ifPresent(nome -> predicates.add(builder.like(builder.lower(root.get("gerente").get("nome")), "%" + nome.toLowerCase() + "%")));
+        
+        Optional.ofNullable(empresaCodigo)
+            .ifPresent(codigo -> predicates.add(builder.equal(root.get("empresaExcecao").get("codigo"), codigo)));
+        
+        if (!Boolean.TRUE.equals(considerarHistorico)) {
+            LocalDate hoje = LocalDate.now();
+            predicates.add(builder.or(
+                builder.greaterThanOrEqualTo(root.get("vigencia").get("fim"), hoje),
+                builder.isNull(root.get("vigencia").get("fim"))
+            ));
+        }
+        
+        return builder.and(predicates.toArray(new Predicate[predicates.size()]));
     }
-}
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-
-public interface GerenteExcecaoRepository extends JpaRepository<GerenteExcecao, Long>, JpaSpecificationExecutor<GerenteExcecao> {
 }
