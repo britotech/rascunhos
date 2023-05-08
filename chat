@@ -1,38 +1,33 @@
-public class GerenteExcecaoSpecification implements Specification<GerenteExcecao> {
-    
-    private final String gerenteChave;
-    private final String gerenteNome;
-    private final String empresaCodigo;
-    private final Boolean considerarHistorico;
-    
-    public GerenteExcecaoSpecification(String gerenteChave, String gerenteNome, String empresaCodigo, Boolean considerarHistorico) {
-        this.gerenteChave = gerenteChave;
-        this.gerenteNome = gerenteNome;
-        this.empresaCodigo = empresaCodigo;
-        this.considerarHistorico = considerarHistorico;
-    }
-    
-    @Override
-    public Predicate toPredicate(Root<GerenteExcecao> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
-        List<Predicate> predicates = new ArrayList<>();
-        
-        Optional.ofNullable(gerenteChave)
-            .ifPresent(chave -> predicates.add(builder.equal(root.get("gerente").get("chave"), chave)));
-        
-        Optional.ofNullable(gerenteNome)
-            .ifPresent(nome -> predicates.add(builder.like(builder.lower(root.get("gerente").get("nome")), "%" + nome.toLowerCase() + "%")));
-        
-        Optional.ofNullable(empresaCodigo)
-            .ifPresent(codigo -> predicates.add(builder.equal(root.get("empresaExcecao").get("codigo"), codigo)));
-        
-        if (!Boolean.TRUE.equals(considerarHistorico)) {
-            LocalDate hoje = LocalDate.now();
-            predicates.add(builder.or(
-                builder.greaterThanOrEqualTo(root.get("vigencia").get("fim"), hoje),
-                builder.isNull(root.get("vigencia").get("fim"))
-            ));
-        }
-        
-        return builder.and(predicates.toArray(new Predicate[predicates.size()]));
-    }
-}
+CREATE OR REPLACE PACKAGE PCK_VALIDACAO 
+IS
+
+    FUNCTION TABELA_EXISTE(pOwner IN VARCHAR2, pNomeTabela IN VARCHAR2) RETURN VARCHAR2;
+
+END PCK_VALIDACAO;
+/
+
+CREATE OR REPLACE PACKAGE BODY PCK_VALIDACAO IS
+
+	FUNCTION TABELA_EXISTE(pOwner IN VARCHAR2, pNomeTabela IN VARCHAR2) RETURN VARCHAR2 IS
+		vExiste VARCHAR2(5);
+	BEGIN
+		SELECT DECODE(COUNT(*), 0, 'FALSE', 'TRUE')
+		INTO vExiste
+		FROM ALL_TABLES
+		WHERE UPPER(OWNER) = UPPER(pOwner)
+		  AND UPPER(TABLE_NAME) = UPPER(pNomeTabela);
+
+		RETURN vExiste;
+	END;
+END PCK_VALIDACAO;
+/
+
+-- EXECUCAO
+SET SERVEROUTPUT ON
+DECLARE
+    v_opcao VARCHAR2(5);
+
+BEGIN
+    v_opcao := pck_validacao.tabela_existe('HR', 'USUARIOS');
+    dbms_output.put_line('existe: ' || v_opcao);
+END;
