@@ -1,6 +1,63 @@
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "\"9EQJ\".DELEGADO_ESCOPO_DELEGACAO", joinColumns = @JoinColumn(name = "DLED_SQ_DELEGADO"),
-               inverseJoinColumns = @JoinColumn(name = "DLED_SQ_ESCOPO"))
-    private List<EscopoDelegacao> escoposDelegacao = new ArrayList<>();
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
+
+public interface DelegacaoRepository extends JpaRepository<Delegacao, Long> {
+
+   @Query("SELECT d FROM Delegacao d WHERE d.delegador = :delegador AND EXISTS "
+            + "(SELECT 1 FROM d.escoposDelegacao e WHERE e.validarUnicidade = true)")
+    List<Delegacao> findByDelegadorAndValidarUnicidade(@Param("delegador") String delegador);
 	
-	validarUnicidade
+	
+    @Query("SELECT d FROM Delegacao d JOIN d.escoposDelegacao e WHERE e IN :escoposDelegacao")
+    List<Delegacao> findByEscoposDelegacao(@Param("escoposDelegacao") List<EscopoDelegacao> escoposDelegacao);
+	
+    @Query("SELECT d FROM Delegacao d WHERE (d.dataInicio BETWEEN :dataInicio AND :dataFim) OR (d.dataFim BETWEEN :dataInicio AND :dataFim)")
+    List<Delegacao> findByDataInicioAndDataFim(@Param("dataInicio") LocalDate dataInicio, @Param("dataFim") LocalDate dataFim);
+	
+	
+
+}
+
+
+
+delega.orm.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-mappings
+    xmlns="http://xmlns.jcp.org/xml/ns/persistence/orm"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/orm_2_2.xsd"
+    version="2.2">
+
+	<named-query name="Restaurante.consultarPorNome">
+		<query>
+		from Restaurante
+		where nome like concat('%', :nome, '%')
+		and cozinha.id = :id
+		</query>
+	</named-query>
+
+</entity-mappings>
+
+
+<named-query name="findByDelegadorAndEscoposDelegacao">
+    <query>
+        <![CDATA[
+        SELECT d FROM Delegacao d WHERE d.delegador = :delegador AND d.escoposDelegacao IN :escoposDelegacao
+        ]]>
+    </query>
+</named-query>
+
+  @NamedQuery(name = "findByDelegadorAndEscoposDelegacao")
+    List<Delegacao> findByDelegadorAndEscoposDelegacao(@Param("delegador") String delegador, @Param("escoposDelegacao") List<EscopoDelegacao> escoposDelegacao);
+	
+O arquivo Delegacao.orm.xml deve ser colocado dentro do diretório META-INF/orm da sua aplicação. Esse diretório é o local padrão para armazenar arquivos de mapeamento de objetos relacionais (ORM) no Java, e é reconhecido pela especificação JPA.
+
+O caminho completo para o arquivo Delegacao.orm.xml deve ser META-INF/orm/Delegacao.orm.xml. É importante lembrar que o diretório META-INF deve ficar na raiz do seu classpath, ou seja, no mesmo nível das pastas src e target.
+
+Se você estiver utilizando o Maven, uma maneira fácil de colocar o arquivo no local correto é criando uma nova pasta META-INF dentro da pasta resources do seu projeto, e colocando o arquivo Delegacao.orm.xml dentro dessa nova pasta. Quando você executar o build do projeto, o Maven irá copiar o arquivo para o local correto dentro da pasta target.	
+
+
