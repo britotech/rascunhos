@@ -1,33 +1,6 @@
-CREATE OR REPLACE PACKAGE PCK_VALIDACAO 
-IS
-
-    FUNCTION TABELA_EXISTE(pOwner IN VARCHAR2, pNomeTabela IN VARCHAR2) RETURN VARCHAR2;
-
-END PCK_VALIDACAO;
-/
-
-CREATE OR REPLACE PACKAGE BODY PCK_VALIDACAO IS
-
-	FUNCTION TABELA_EXISTE(pOwner IN VARCHAR2, pNomeTabela IN VARCHAR2) RETURN VARCHAR2 IS
-		vExiste VARCHAR2(5);
-	BEGIN
-		SELECT DECODE(COUNT(*), 0, 'FALSE', 'TRUE')
-		INTO vExiste
-		FROM ALL_TABLES
-		WHERE UPPER(OWNER) = UPPER(pOwner)
-		  AND UPPER(TABLE_NAME) = UPPER(pNomeTabela);
-
-		RETURN vExiste;
-	END;
-END PCK_VALIDACAO;
-/
-
--- EXECUCAO
-SET SERVEROUTPUT ON
-DECLARE
-    v_opcao VARCHAR2(5);
-
-BEGIN
-    v_opcao := pck_validacao.tabela_existe('HR', 'USUARIOS');
-    dbms_output.put_line('existe: ' || v_opcao);
-END;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "\"9EQJ\".DELEGADO_ESCOPO_DELEGACAO", joinColumns = @JoinColumn(name = "DLED_SQ_DELEGADO"),
+               inverseJoinColumns = @JoinColumn(name = "DLED_SQ_ESCOPO"))
+    private List<EscopoDelegacao> escoposDelegacao = new ArrayList<>();
+	
+	validarUnicidade
